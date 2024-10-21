@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+#      - mongodb
+      - kafka
+    environment:
+      - RUN_ADDRESS=:8080
+#      - DATABASE_URI=mongodb://mongodb:27017
+#      - DATABASE_NAME=gophermartLoyalty
+#      - ACCRUAL_SYSTEM_ADDRESS=http://accrual:8080
+      - BROKERS_LIST=kafka:9092
+    networks:
+      - gophermart-network
+
+#  mongodb:
+#    image: mongo:5.0
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - mongodb_data:/data/db
+#    networks:
+#      - gophermart-network
+
+#  accrual:
+#    image: ghcr.io/praktikum-go/accrual-system:latest
+#    ports:
+#      - "8081:8080"
+#    networks:
+#      - gophermart-network
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - gophermart-network
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "orders:1:1"
+    depends_on:
+      - zookeeper
+    networks:
+      - gophermart-network
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+
+networks:
+  gophermart-network:
+    driver: bridge
+
+#volumes:
+#  mongodb_data:
